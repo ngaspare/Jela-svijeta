@@ -5,7 +5,7 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
 use Astrotomic\Translatable\Translatable;
-use App\Dishes;
+use App\Dish;
 
 class Ingredient extends Model
 {
@@ -14,7 +14,9 @@ class Ingredient extends Model
     protected $guarded = ['id'];
     public $timestamps = false;
 
-    public function tags()
+    protected $hidden = ['pivot', 'translations', 'created_at', 'updated_at'];
+
+    public function dishes()
     {
         return $this->belongsToMany(Dish::class);
     }

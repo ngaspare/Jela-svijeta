@@ -17,5 +17,7 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::get('/jela', 'DishController@index')->name('dish.index');
-Route::get('/jela/upit', 'DishController@show')->name('dish.show');
+//Route::get('/jela', 'DishController@index')->name('dish.index');
+//Route::get('/jela/upit', 'DishController@show')->name('dish.show');
+
+Route::get('/meals', 'DishController@index')->name('dish.index');

@@ -14,6 +14,8 @@ class Tag extends Model
     protected $guarded = ['id'];
     public $timestamps = false;
 
+    protected $hidden = ['pivot', 'translations', 'created_at', 'updated_at'];
+
     public function dishes()
     {
         return $this->belongsToMany(Dish::class);

@@ -16,7 +16,9 @@ class Dish extends Model
     //protected $guarded = ['id'];
     public $timestamps = false;
 
-    public function categorie()
+    protected $hidden = ['pivot', 'translations', 'category_id', 'created_at', 'updated_at'];
+
+    public function category()
     {
         return $this->belongsTo(Category::class);
     }
