@@ -17,7 +17,7 @@ class Dish extends Model
     public $timestamps = false;
 
     protected $visible = ['id', 'title', 'description', 'status', 'category', 'ingredients', 'tags'];
-    
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -47,13 +47,5 @@ class Dish extends Model
                                                     return $query->with('ingredients');
                                                 })
                             ->paginate($page);
-    }
-
-    public function scopeByTags($query, $tags) {
-        $query->whereHas('tags', function($q) use($tags) {
-            $q->whereIn('tags.id', $tags)
-                ->havingRaw('count(distinct tags.id) = ?', [count($tags)]);
-        }, '=', count($tags));
-        return $query;
     }
 }
