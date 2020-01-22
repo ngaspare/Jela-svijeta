@@ -1,7 +1,11 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use Faker\Generator as Faker;
 use App\Dish;
+use App\Category;
+use App\Tag;
+use App\Ingredient;
 
 class CustomTableSeeder extends Seeder
 {
@@ -10,11 +14,11 @@ class CustomTableSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(Faker $faker)
     {
         $locales = ['hr', 'en', 'de'];
 
-        $categories = factory(App\Category::class, 10)->create();
+        $categories = factory(App\Category::class, 5)->create();
 
         $ingredients = factory(App\Ingredient::class, 10)->create();
 
@@ -25,32 +29,27 @@ class CustomTableSeeder extends Seeder
             factory(App\Locale::class)->create(['locale' => $locale]);
         }
 
-        foreach($categories as $category)
-        {
+        for($i = 0; $i < 20; $i++)
+        {                
             $dishes = factory(App\Dish::class)->create([
-                'category_id' => $category->id,
-                'created_at' => $category->created_at
+                'category_id' => $faker->boolean(70) ? Category::all()->random()->id : null,
+                'created_at' => $faker->dateTimeBetween($startDate = '-2 years', $endDate = '-1 years')
                 ]);
         }
 
+        foreach(Dish::all() as $dish)
+        {
+            $dish->ingredients()->sync(Ingredient::pluck('id')->random(rand(1,5)));
+            $dish->save();
+        }
+
+        foreach(Dish::all() as $dish)
+        {
+            $dish->tags()->sync(Tag::pluck('id')->random(rand(1,5)));
+            $dish->save();
+        }
+
         $dishes = Dish::get();
-
-        foreach($ingredients as $ingredient)
-        {
-            foreach($dishes as $dish)
-            {
-                $dish->ingredients()->attach($ingredient->id);
-            }
-        }
-   
-        foreach($tags as $tag)
-        {
-            foreach($dishes as $dish)
-            {
-                $dish->tags()->attach($tag->id);
-            }
-        }
-
         foreach($locales as $locale){
             foreach($categories as $category)
             {
@@ -60,6 +59,7 @@ class CustomTableSeeder extends Seeder
                     'created_at' => $category->created_at
             ]);
             }
+
             foreach($dishes as $dish)
             {
                 factory(App\DishTranslation::class)->create([

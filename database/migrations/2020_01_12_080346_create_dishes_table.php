@@ -18,6 +18,7 @@ class CreateDishesTable extends Migration
             $table->unsignedBigInteger('category_id')->nullable();
             $table->string('status');
             $table->timestamps();
+            $table->softDeletes();
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
         });
     }

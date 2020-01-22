@@ -32,14 +32,10 @@ class DishController extends Controller
             $validatedData['per_page'] = NULL;
         }
 
+        //postavimo željeni jezik
         if(array_key_exists('lang', $validatedData))
         {
             app()->setLocale($validatedData['lang']);
-        }
-
-        if(!array_key_exists('with', $validatedData))
-        {
-            $validatedData['with'] = NULL;
         }
 
         if(array_key_exists('tags', $validatedData))
@@ -51,70 +47,86 @@ class DishController extends Controller
         {
             $with = explode(',', $validatedData['with']);
         }
-        
-            if(array_key_exists('tags', $validatedData) && array_key_exists('category', $validatedData))
+        else
+        {
+            $with = [];
+        }
+    
+        //Pretraživamo po tagovima i kategorijama
+        if(array_key_exists('tags', $validatedData) && array_key_exists('category', $validatedData))
+        {
+            if(strtoupper($validatedData['category']) == "NULL")
             {
-                if(strtoupper($validatedData['category']) == "NULL")
+                $dishes = Dish::whereHas('tags', function ($query) use ($tags)
                 {
-                    foreach($tags as $tag)
-                    {
-                        $dishes = Tag::where('id', $tag)->firstOrFail()->dishes()->whereNull('category_id');
-                        return $dishes->by($with, $validatedData['per_page']);
-                    }
+                    $query->whereIn('tags.id', $tags)->havingRaw('count(distinct tags.id) = ?', [count($tags)]);
                 }
-
-                elseif(strtoupper($validatedData['category']) == "!NULL")
-                {
-                    foreach($tags as $tag)
-                    {
-                        $dishes = Tag::where('id', $tag)->firstOrFail()->dishes()->whereNotNull('category_id');
-                        return $dishes->by($with, $validatedData['per_page']);
-                    }
-                }
-
-                else
-                {
-                    foreach($tags as $tag)
-                    {
-                        $dishes = Tag::where('id', $tag)->firstOrFail()->dishes()->where('category_id', $validatedData['category']);
-                        return $dishes->by($with, $validatedData['per_page']);
-                    }
-                }
-            }
-
-            elseif(array_key_exists('tags', $validatedData) && !array_key_exists('category', $validatedData))
-            {
-                foreach($tags as $tag)
-                {
-                        $dishes = Tag::where('id', $tag)->firstOrFail()->dishes();
-                        return $dishes->by($with, $validatedData['per_page']);
-                }
+                    ,'=', count($tags))->whereNull('category_id')->by($with, $validatedData['per_page']);;
+                
                 return $dishes;
             }
 
-            elseif(array_key_exists('category', $validatedData) && !array_key_exists('tags', $validatedData))
+            elseif(strtoupper($validatedData['category']) == "!NULL")
             {
-                if(strtoupper($validatedData['category']) == "NULL")
+                $dishes = Dish::whereHas('tags', function ($query) use ($tags)
                 {
-                    $dishes = Dish::whereNull('category_id');
-                    return $dishes->by($with, $validatedData['per_page']);
+                    $query->whereIn('tags.id', $tags)->havingRaw('count(distinct tags.id) = ?', [count($tags)]);
                 }
-
-                if(strtoupper($validatedData['category']) == "!NULL")
-                {
-                    $dishes = Dish::whereNotNull('category_id');
-                    return $dishes->by($with, $validatedData['per_page']);
-                }
-
-                $dishes = Dish::where('category_id', $validatedData['category']);
-                return $dishes->by($with, $validatedData['per_page']);
-
+                    ,'=', count($tags))->whereNotNull('category_id')->by($with, $validatedData['per_page']);;
+                
+                return $dishes;
             }
 
             else
-            {   
-                $dishes = (new Dish)->newQuery();
+            {
+                $dishes = Dish::whereHas('tags', function ($query) use ($tags)
+                {
+                    $query->whereIn('tags.id', $tags)->havingRaw('count(distinct tags.id) = ?', [count($tags)]);
+                }
+                    ,'=', count($tags))->where('category_id', $validatedData['category'])
+                    ->by($with, $validatedData['per_page']);;
+                
+                return $dishes;
+            }
+        }
+
+        //Pretraživamo po tagovima
+        elseif(array_key_exists('tags', $validatedData) && !array_key_exists('category', $validatedData))
+        {
+            $dishes = Dish::whereHas('tags', function ($query) use ($tags)
+                {
+                    $query->whereIn('tags.id', $tags)->havingRaw('count(distinct tags.id) = ?', [count($tags)]);
+                }
+                    ,'=', count($tags))->by($with, $validatedData['per_page']);;
+                
+                return $dishes;
+        }
+        
+        //Pretraživamo po kategoriji
+        elseif(array_key_exists('category', $validatedData) && !array_key_exists('tags', $validatedData))
+        {
+            if(strtoupper($validatedData['category']) == "NULL")
+            {
+                $dishes = Dish::whereNull('category_id');
                 return $dishes->by($with, $validatedData['per_page']);
-            }       
+            }
+
+            if(strtoupper($validatedData['category']) == "!NULL")
+            {
+                $dishes = Dish::whereNotNull('category_id');
+                return $dishes->by($with, $validatedData['per_page']);
+            }
+
+            $dishes = Dish::where('category_id', $validatedData['category']);
+            return $dishes->by($with, $validatedData['per_page']);
+
+        }
+
+        //Izlistamo sva jela
+        else
+        {   
+            $dishes = (new Dish)->newQuery();
+            return $dishes->by($with, $validatedData['per_page']);
+        }       
     }
 }
