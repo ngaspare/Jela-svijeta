@@ -31,4 +31,23 @@ class Dish extends Model
     {
         return $this->belongsToMany(Ingredient::class);
     }
+
+    public function scope($query, $with)
+    {
+        $query->when(in_array("category", $with), function($query)
+                                                {
+                                                    return $query->with('category');
+                                                })
+                            ->when(in_array("tags", $with), function($query)
+                                                {
+                                                    return $query->with('tags');
+                                                })
+                            ->when(in_array("ingredients", $with), function($query)
+                                                {
+                                                    return $query->with('ingredients');
+                                                })
+                            ->paginate($validatedData['per_page']);
+
+        return $query;
+    }
 }
