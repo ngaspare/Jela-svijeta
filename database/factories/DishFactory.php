@@ -7,8 +7,8 @@ use Faker\Generator as Faker;
 
 $factory->define(Dish::class, function (Faker $faker) {
     return [
-        'status' => $faker->randomElement($array = array ('created', 'modified', 'deleted')),
-        'updated_at' => $faker->dateTimeBetween($startDate = '-1 years', $endDate = 'now'),
-        'deleted_at' => $faker->boolean(20) ? $faker->dateTimeBetween($startDate = '-1 years', $endDate = 'now') : null,
+        'updated_at' => $faker->boolean() ? $faker->dateTimeBetween($startDate = '-1 years', $endDate = 'now') : null,
+        'deleted_at' => $faker->boolean(30) ? $faker->dateTimeBetween($startDate = '-1 years', $endDate = 'now') : null,
+        'status' => ''
     ];
 });

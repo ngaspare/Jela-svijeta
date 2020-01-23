@@ -37,19 +37,25 @@ class CustomTableSeeder extends Seeder
                 ]);
         }
 
-        foreach(Dish::all() as $dish)
+        foreach(Dish::withTrashed()->get() as $dish)
+        {
+            $dish->status = $dish->deleted_at ? 'deleted' : ($dish->updated_at ? 'modified' : 'created');
+            $dish->save();        
+        }
+
+        foreach(Dish::withTrashed()->get() as $dish)
         {
             $dish->ingredients()->sync(Ingredient::pluck('id')->random(rand(1,5)));
             $dish->save();
         }
 
-        foreach(Dish::all() as $dish)
+        foreach(Dish::withTrashed()->get() as $dish)
         {
             $dish->tags()->sync(Tag::pluck('id')->random(rand(1,5)));
             $dish->save();
         }
 
-        $dishes = Dish::get();
+        $dishes = Dish::withTrashed()->get();
         foreach($locales as $locale){
             foreach($categories as $category)
             {

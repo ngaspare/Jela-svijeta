@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 use App\Category;
 use App\Tag;
 use App\Ingredient;
+use Carbon\Carbon;
 use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
 use Astrotomic\Translatable\Translatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Dish extends Model
 {
+    use softDeletes;
     use Translatable;
     public $translatedAttributes = ['title', 'description'];
     //protected $guarded = ['id'];
@@ -48,5 +50,28 @@ class Dish extends Model
                                                     return $query->with('ingredients');
                                                 })
                             ->paginate($page);
+                                            }
+    
+
+    public function scopeByDate($query, $date) 
+    {
+        if ($date === 0)
+        {
+            return $query;
+        }
+
+        $date = Carbon::createFromTimestamp($date)->toDateTimeString();
+        $checks = ['created_at', 'updated_at', 'deleted_at'];
+        return $query->withTrashed()->where(function($query) use ($date, $checks) 
+        {
+            foreach($checks as $check) 
+            {
+                $query->orWhere(function($query) use($date, $check) 
+                {
+                    return $query->whereDate($check, '>=', $date);
+                });
+            }
+            return $query;
+        });
     }
 }
