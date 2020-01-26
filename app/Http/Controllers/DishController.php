@@ -5,9 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use App\Dish;
-use App\Tag;
-use App\Category;
-use Illuminate\Support\Facades\DB;use Carbon\Carbon;
 
 class DishController extends Controller
 {
@@ -23,15 +20,19 @@ class DishController extends Controller
             'diff_time' => 'sometimes|nullable'
         ]);
 
-        if(!array_key_exists('per_page', $validatedData))
-        {
-            $validatedData['per_page'] = NULL;
-        }
-
         //postavimo željeni jezik
         if(array_key_exists('lang', $validatedData))
         {
             app()->setLocale($validatedData['lang']);
+        }
+        else
+        {
+            return 'Morate unjeti jezik po kojem želite izlistati jela!';
+        }
+
+        if(!array_key_exists('per_page', $validatedData))
+        {
+            $validatedData['per_page'] = NULL;
         }
 
         if(array_key_exists('tags', $validatedData))
@@ -57,73 +58,55 @@ class DishController extends Controller
             $date = 0;
         }
 
+        if(array_key_exists('category', $validatedData))
+        {
+            $category = (strtoupper($validatedData['category']));
+        }
+
         //Pretraživamo po tagovima i kategorijama
         if(array_key_exists('tags', $validatedData) && array_key_exists('category', $validatedData))
         {
-            if(strtoupper($validatedData['category']) == "NULL")
+            if($category == 'NULL')
             {
-                return $dish->whereHas('tags', function ($query) use ($tags)
-                {
-                    $query->whereIn('tags.id', $tags)->havingRaw('count(distinct tags.id) = ?', [count($tags)]);
-                }
-                    ,'=', count($tags))->whereNull('category_id')
-                    ->byDate($date)->by($with, $validatedData['per_page']);
+                return $dish->byTags($tags)->whereNull('category_id')->byDate($date)->byWith($with, $validatedData['per_page']);
             }
-
-            elseif(strtoupper($validatedData['category']) == "!NULL")
+            elseif($category == '!NULL')
             {
-                return $dish->whereHas('tags', function ($query) use ($tags)
-                {
-                    $query->whereIn('tags.id', $tags)->havingRaw('count(distinct tags.id) = ?', [count($tags)]);
-                }
-                    ,'=', count($tags))->whereNotNull('category_id')
-                    ->byDate($date)->by($with, $validatedData['per_page']);
+                return $dish->byTags($tags)->whereNotNull('category_id')->byDate($date)->byWith($with, $validatedData['per_page']);
             }
-
             else
             {
-                return $dish->whereHas('tags', function ($query) use ($tags)
-                {
-                    $query->whereIn('tags.id', $tags)->havingRaw('count(distinct tags.id) = ?', [count($tags)]);
-                }
-                    ,'=', count($tags))->where('category_id', $validatedData['category'])
-                    ->byDate($date)->by($with, $validatedData['per_page']);
+                return $dish->byTags($tags)->where('category_id', $category)->byDate($date)->byWith($with, $validatedData['per_page']);
             }
         }
 
         //Pretraživamo po tagovima
         elseif(array_key_exists('tags', $validatedData) && !array_key_exists('category', $validatedData))
         {
-            return $dish->whereHas('tags', function ($query) use ($tags)
-                {
-                    $query->whereIn('tags.id', $tags)->havingRaw('count(distinct tags.id) = ?', [count($tags)]);
-                }
-                    ,'=', count($tags))->byDate($date)->by($with, $validatedData['per_page']);
+            return $dish->byTags($tags)->byDate($date)->byWith($with, $validatedData['per_page']);
         }
 
         //Pretraživamo po kategoriji
         elseif(array_key_exists('category', $validatedData) && !array_key_exists('tags', $validatedData))
         {
-            if(strtoupper($validatedData['category']) == "NULL")
+            if($category == 'NULL')
             {
-                return $dish->whereNull('category_id')
-                    ->byDate($date)->by($with, $validatedData['per_page']);
+                return $dish->whereNull('category_id')->byDate($date)->byWith($with, $validatedData['per_page']);
             }
-
-            if(strtoupper($validatedData['category']) == "!NULL")
+            elseif($category == '!NULL')
             {
-                return $dish->whereNotNull('category_id')
-                    ->byDate($date)->by($with, $validatedData['per_page'], $date);
-            } 
-
-            return $dish->where('category_id', $validatedData['category'])
-                ->byDate($date)->by($with, $validatedData['per_page'], $date);
+                return $dish->whereNotNull('category_id')->byDate($date)->byWith($with, $validatedData['per_page']);
+            }
+            else
+            {
+                return $dish->where('category_id', $category)->byDate($date)->byWith($with, $validatedData['per_page']);
+            }
         }
 
         //Izlistamo sva jela
         else
         {
-            return $dish->byDate($date)->by($with, $validatedData['per_page'], $date);
+            return $dish->byDate($date)->byWith($with, $validatedData['per_page']);
         }
     }
 }

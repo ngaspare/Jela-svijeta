@@ -16,7 +16,6 @@ class Dish extends Model
     use softDeletes;
     use Translatable;
     public $translatedAttributes = ['title', 'description'];
-    //protected $guarded = ['id'];
     public $timestamps = false;
 
     protected $visible = ['id', 'title', 'description', 'status', 'category', 'ingredients', 'tags'];
@@ -35,7 +34,7 @@ class Dish extends Model
         return $this->belongsToMany(Ingredient::class);
     }
 
-    public function scopeBy($query, $with, $page)
+    public function scopeByWith($query, $with, $page)
     {
         return $query->when(in_array("category", $with), function($query)
                                                 {
@@ -73,5 +72,14 @@ class Dish extends Model
             }
             return $query;
         });
+    }
+
+    public function scopeByTags($query, $tags) 
+    {
+        return $query->whereHas('tags', function ($query) use ($tags)
+            {
+                $query->whereIn('id', $tags);
+            }
+            , '=', count($tags));
     }
 }
